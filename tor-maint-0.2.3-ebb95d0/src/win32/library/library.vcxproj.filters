@@ -1,0 +1,381 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{0f4272a2-1e12-422e-8818-d0a9bbbf0399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\or">
+      <UniqueIdentifier>{c2f4288a-fd8c-48ce-8f1a-3a43b2166a2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{125feb11-02c1-4cff-81aa-d2de4326692f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\or">
+      <UniqueIdentifier>{68bfdb50-9be2-44a5-bd7c-d86d424706f8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="..\..\common\ciphers.inc">
+      <Filter>Header Files\common</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\common\address.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\aes.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\compat.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\compat_libevent.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\container.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\crypto.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\di_ops.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ht.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\memarea.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\mempool.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\procmon.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\torgzip.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\torint.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\torlog.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\tortls.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\orconfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\buffers.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\circuitbuild.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\circuitlist.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\circuituse.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\command.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\config.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\connection.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\connection_edge.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\connection_or.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\control.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\cpuworker.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\directory.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\dirserv.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\dirvote.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\dns.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\dnsserv.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\eventdns.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\eventdns_tor.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\geoip.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\hibernate.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\main.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\microdesc.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\networkstatus.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\nodelist.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\ntmain.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\onion.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\or.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\policies.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\reasons.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\relay.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\rendclient.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\rendcommon.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\rendmid.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\rendservice.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\rephist.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\router.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\routerlist.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\routerparse.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\status.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\or\transports.h">
+      <Filter>Header Files\or</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libtor_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\onionroute.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\common\address.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\aes.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\compat.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\compat_libevent.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\container.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\crypto.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\di_ops.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\log.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\memarea.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\mempool.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\procmon.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\sha256.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\torgzip.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\tortls.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util_codedigest.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\eventdns.c">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\buffers.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\circuitbuild.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\circuitlist.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\circuituse.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\command.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\config.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\config_codedigest.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\connection.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\connection_edge.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\connection_or.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\control.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\cpuworker.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\directory.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\dirserv.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\dirvote.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\dns.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\dnsserv.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\geoip.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\hibernate.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\main.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\microdesc.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\networkstatus.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\nodelist.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\ntmain.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\onion.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\policies.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\reasons.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\relay.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\rendclient.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\rendcommon.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\rendmid.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\rendservice.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\rephist.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\router.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\routerlist.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\routerparse.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\status.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\or\transports.c">
+      <Filter>Source Files\or</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
