@@ -1,0 +1,13 @@
+*.obj
+visualstudioproject/Debug/cl.command.1.tlog
+*.tlog
+*.ipch
+*.sdf
+*.opensdf
+*.pdb
+*.ilk
+*.log
+*.idb
+*.dll
+*.lastbuildstate
+*.suo

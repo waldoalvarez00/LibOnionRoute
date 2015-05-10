@@ -7,7 +7,7 @@ const char *
 tor_get_digests(void)
 {
   return ""
-#include "or_sha1.i"
+//#include "or_sha1.i"
     ;
 }
 

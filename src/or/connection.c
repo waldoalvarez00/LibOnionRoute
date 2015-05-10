@@ -520,7 +520,11 @@ connection_free_(connection_t *conn)
        * and listeners at the same time */
       tor_assert(conn->type == CONN_TYPE_CONTROL_LISTENER);
 
-      if (unlink(conn->address) < 0 && errno != ENOENT) {
+	  #if defined(_MSC_VER)
+	    if (_unlink(conn->address) < 0 && errno != ENOENT) {
+      #else
+	    if (unlink(conn->address) < 0 && errno != ENOENT) {
+      #endif
         log_warn(LD_NET, "Could not unlink %s: %s", conn->address,
                          strerror(errno));
       }

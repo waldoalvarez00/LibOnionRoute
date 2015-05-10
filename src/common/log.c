@@ -868,7 +868,15 @@ add_temp_log(int min_severity)
   log_severity_list_t *s = tor_malloc_zero(sizeof(log_severity_list_t));
   set_log_severity_config(min_severity, LOG_ERR, s);
   LOCK_LOGS();
-  add_stream_log_impl(s, "<temp>", fileno(stdout));
+
+  #if defined(_MSC_VER)
+    add_stream_log_impl(s, "<temp>", _fileno(stdout));
+  #else
+    add_stream_log_impl(s, "<temp>", fileno(stdout));
+  #endif
+  
+
+
   tor_free(s);
   logfiles->is_temporary = 1;
   UNLOCK_LOGS();

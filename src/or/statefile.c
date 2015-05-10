@@ -275,8 +275,14 @@ or_state_save_broken(char *fname)
     log_warn(LD_BUG, "Unable to parse state in \"%s\"; too many saved bad "
              "state files to move aside. Discarding the old state file.",
              fname);
-    res = unlink(fname);
-    if (res != 0) {
+
+    #if defined(_MSC_VER)
+	  res = _unlink(fname);
+    #else
+	  res = unlink(fname);
+    #endif
+
+	if (res != 0) {
       log_warn(LD_FS,
                "Also couldn't discard old state file \"%s\" because "
                "unlink() failed: %s",

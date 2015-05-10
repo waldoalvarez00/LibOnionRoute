@@ -1274,7 +1274,12 @@ networkstatus_set_current_consensus(const char *consensus,
         /* Even if we had enough signatures, we'd never use this as the
          * latest consensus. */
         if (was_waiting_for_certs && from_cache)
-          if (unlink(unverified_fname) != 0) {
+			
+    #if defined(_MSC_VER)
+	  if (_unlink(unverified_fname) != 0) {
+    #else
+	  if (unlink(unverified_fname) != 0) {
+    #endif
             log_warn(LD_FS,
                      "Failed to unlink %s: %s",
                      unverified_fname, strerror(errno));
@@ -1289,7 +1294,14 @@ networkstatus_set_current_consensus(const char *consensus,
         result = -2;
       }
       if (was_waiting_for_certs && (r < -1) && from_cache) {
-        if (unlink(unverified_fname) != 0) {
+
+		#if defined(_MSC_VER)
+		  if (_unlink(unverified_fname) != 0) {
+        #else
+		  if (unlink(unverified_fname) != 0) {
+        #endif
+
+        
             log_warn(LD_FS,
                      "Failed to unlink %s: %s",
                      unverified_fname, strerror(errno));
@@ -1342,7 +1354,14 @@ networkstatus_set_current_consensus(const char *consensus,
       waiting->body = NULL;
     waiting->set_at = 0;
     waiting->dl_failed = 0;
-    if (unlink(unverified_fname) != 0) {
+
+	#if defined(_MSC_VER)
+	if (_unlink(unverified_fname) != 0) {
+    #else
+	if (unlink(unverified_fname) != 0) {
+    #endif
+
+    
       log_warn(LD_FS,
                "Failed to unlink %s: %s",
                unverified_fname, strerror(errno));

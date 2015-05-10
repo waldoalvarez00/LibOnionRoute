@@ -1919,7 +1919,13 @@ config_parse_commandline(int argc, char **argv, int ignore_errors,
 
     if (want_arg && i == argc-1) {
       if (ignore_errors) {
-        arg = strdup("");
+
+		#if defined(_MSC_VER)
+	    arg = _strdup("");
+        #else
+	    arg = strdup("");
+        #endif
+        
       } else {
         log_warn(LD_CONFIG,"Command-line option '%s' with no value. Failing.",
             argv[i]);
@@ -1928,7 +1934,13 @@ config_parse_commandline(int argc, char **argv, int ignore_errors,
         return -1;
       }
     } else {
-      arg = want_arg ? tor_strdup(argv[i+1]) : strdup("");
+
+	  #if defined(_MSC_VER)
+		arg = want_arg ? tor_strdup(argv[i+1]) : _strdup("");
+      #else
+		arg = want_arg ? tor_strdup(argv[i+1]) : strdup("");
+      #endif
+      
     }
 
     param = tor_malloc_zero(sizeof(config_line_t));
@@ -3848,7 +3860,14 @@ get_windows_conf_root(void)
 #define APPDATA_PATH CSIDL_APPDATA
 #endif
   if (!SUCCEEDED(SHGetSpecialFolderLocation(NULL, APPDATA_PATH, &idl))) {
-    getcwd(path,MAX_PATH);
+
+	#if defined(_MSC_VER)
+	  _getcwd(path,MAX_PATH);
+    #else
+	  getcwd(path,MAX_PATH);
+    #endif
+
+    
     is_set = 1;
     log_warn(LD_CONFIG,
              "I couldn't find your application data folder: are you "
@@ -4526,8 +4545,19 @@ options_init_logs(or_options_t *options, int validate_only)
                    "Can't log to %s with RunAsDaemon set; skipping stdout",
                    err?"stderr":"stdout");
         } else {
-          add_stream_log(severity, err?"<stderr>":"<stdout>",
+
+
+		  #if defined(_MSC_VER)
+			add_stream_log(severity, err?"<stderr>":"<stdout>",
+                         _fileno(err?stderr:stdout));
+          #else
+			add_stream_log(severity, err?"<stderr>":"<stdout>",
                          fileno(err?stderr:stdout));
+          #endif
+
+          
+
+
         }
       }
       goto cleanup;
@@ -6615,7 +6645,15 @@ remove_file_if_very_old(const char *fname, time_t now)
     format_local_iso_time(buf, st.st_mtime);
     log_notice(LD_GENERAL, "Obsolete file %s hasn't been modified since %s. "
                "Removing it.", fname, buf);
-    if (unlink(fname) != 0) {
+
+	#if defined(_MSC_VER)
+	  if (_unlink(fname) != 0) {
+    #else
+	  if (unlink(fname) != 0) {
+    #endif
+
+    
+
       log_warn(LD_FS, "Failed to unlink %s: %s",
                fname, strerror(errno));
     }

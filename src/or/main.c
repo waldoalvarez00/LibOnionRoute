@@ -2601,13 +2601,25 @@ tor_cleanup(void)
     /* Remove our pid file. We don't care if there was an error when we
      * unlink, nothing we could do about it anyways. */
     if (options->PidFile) {
-      if (unlink(options->PidFile) != 0) {
+
+    #if defined(_MSC_VER)
+		if (_unlink(options->PidFile) != 0) {
+    #else
+		if (unlink(options->PidFile) != 0) {
+    #endif
         log_warn(LD_FS, "Couldn't unlink pid file %s: %s",
                  options->PidFile, strerror(errno));
       }
     }
     if (options->ControlPortWriteToFile) {
-      if (unlink(options->ControlPortWriteToFile) != 0) {
+
+	  #if defined(_MSC_VER)
+		if (_unlink(options->ControlPortWriteToFile) != 0) {
+      #else
+		if (unlink(options->ControlPortWriteToFile) != 0) {
+      #endif
+
+      
         log_warn(LD_FS, "Couldn't unlink control port file %s: %s",
                  options->ControlPortWriteToFile,
                  strerror(errno));

@@ -825,7 +825,14 @@ replace_file(const char *from, const char *to)
     case FN_NOENT:
       break;
     case FN_FILE:
-      if (unlink(to)) return -1;
+
+	  #if defined(_MSC_VER)
+		if (_unlink(to)) return -1;
+      #else
+		if (unlink(to)) return -1;
+      #endif
+
+      
       break;
     case FN_ERROR:
       return -1;

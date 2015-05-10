@@ -96,6 +96,14 @@
 #include <sys/wait.h>
 #endif
 
+
+
+#if defined(_MSC_VER)
+#define close _close
+#endif
+
+
+
 /* =====
  * Assertion helper.
  * ===== */
@@ -257,7 +265,14 @@ tor_strdup_(const char *s DMALLOC_PARAMS)
 #ifdef USE_DMALLOC
   dup = dmalloc_strdup(file, line, s, 0);
 #else
+
+  #if defined(_MSC_VER)
+  dup = _strdup(s);
+  #else
   dup = strdup(s);
+  #endif
+
+  
 #endif
   if (PREDICT_UNLIKELY(dup == NULL)) {
     log_err(LD_MM,"Out of memory on strdup(). Dying.");
@@ -1763,7 +1778,15 @@ write_all(tor_socket_t fd, const char *buf, size_t count, int isSocket)
     if (isSocket)
       result = tor_socket_send(fd, buf+written, count-written, 0);
     else
-      result = write((int)fd, buf+written, count-written);
+	{
+	  #if defined(_MSC_VER)
+		result = _write((int)fd, buf+written, count-written);
+      #else
+		result = write((int)fd, buf+written, count-written);
+      #endif
+      
+	}
+
     if (result<0)
       return -1;
     written += result;
@@ -1789,7 +1812,14 @@ read_all(tor_socket_t fd, char *buf, size_t count, int isSocket)
     if (isSocket)
       result = tor_socket_recv(fd, buf+numread, count-numread, 0);
     else
-      result = read((int)fd, buf+numread, count-numread);
+	{
+	  #if defined(_MSC_VER)
+		result = _read((int)fd, buf+numread, count-numread);
+      #else
+		result = read((int)fd, buf+numread, count-numread);
+      #endif
+	}
+
     if (result<0)
       return -1;
     else if (result == 0)
@@ -1897,7 +1927,7 @@ check_private_dir(const char *dirname, cpd_check_t check,
     if (check & CPD_CREATE) {
       log_info(LD_GENERAL, "Creating directory %s", dirname);
 #if defined (_WIN32) && !defined (WINCE)
-      r = mkdir(dirname);
+      r = _mkdir(dirname);
 #else
       r = mkdir(dirname, 0700);
 #endif
@@ -2098,7 +2128,15 @@ start_writing_to_file(const char *fname, int open_flags, int mode,
 
  err:
   if (new_file->fd >= 0)
-    close(new_file->fd);
+  {
+	#if defined(_MSC_VER)
+	  _close(new_file->fd);
+    #else
+	  close(new_file->fd);
+    #endif
+    
+  }
+
   *data_out = NULL;
   tor_free(new_file->filename);
   tor_free(new_file->tempname);
@@ -2116,8 +2154,15 @@ fdopen_file(open_file_t *file_data)
   if (file_data->stdio_file)
     return file_data->stdio_file;
   tor_assert(file_data->fd >= 0);
-  if (!(file_data->stdio_file = fdopen(file_data->fd,
-                                       file_data->binary?"ab":"a"))) {
+
+  #if defined(_MSC_VER)
+    if (!(file_data->stdio_file = _fdopen(file_data->fd,
+                                       file_data->binary?"ab":"a"))) 
+  #else
+    if (!(file_data->stdio_file = fdopen(file_data->fd,
+                                       file_data->binary?"ab":"a"))) 
+  #endif
+  {
     log_warn(LD_FS, "Couldn't fdopen \"%s\" [%d]: %s", file_data->filename,
              file_data->fd, strerror(errno));
   }
@@ -2156,7 +2201,13 @@ finish_writing_to_file_impl(open_file_t *file_data, int abort_write)
                strerror(errno));
       abort_write = r = -1;
     }
-  } else if (file_data->fd >= 0 && close(file_data->fd) < 0) {
+  }
+  #if defined(_MSC_VER)
+  else if (file_data->fd >= 0 && _close(file_data->fd) < 0)
+  #else
+  else if (file_data->fd >= 0 && close(file_data->fd) < 0)
+  #endif
+  {
     log_warn(LD_FS, "Error flushing \"%s\": %s", file_data->filename,
              strerror(errno));
     abort_write = r = -1;
@@ -2165,7 +2216,13 @@ finish_writing_to_file_impl(open_file_t *file_data, int abort_write)
   if (file_data->rename_on_close) {
     tor_assert(file_data->tempname && file_data->filename);
     if (abort_write) {
-      int res = unlink(file_data->tempname);
+
+	  #if defined(_MSC_VER)
+		int res = _unlink(file_data->tempname);
+      #else
+		int res = unlink(file_data->tempname);
+      #endif
+
       if (res != 0) {
         /* We couldn't unlink and we'll leave a mess behind */
         log_warn(LD_FS, "Failed to unlink %s: %s",
@@ -2326,7 +2383,15 @@ read_file_to_str_until_eof(int fd, size_t max_bytes_to_read, size_t *sz_out)
     if (string_max > max_bytes_to_read)
       string_max = max_bytes_to_read + 1;
     string = tor_realloc(string, string_max);
-    r = read(fd, string + pos, string_max - pos - 1);
+
+	#if defined(_MSC_VER)
+	  r = _read(fd, string + pos, string_max - pos - 1);
+    #else
+	  r = read(fd, string + pos, string_max - pos - 1);
+    #endif
+
+    
+
     if (r < 0) {
       tor_free(string);
       return NULL;
@@ -2380,9 +2445,16 @@ read_file_to_str(const char *filename, int flags, struct stat *stat_out)
     return NULL;
   }
 
-  if (fstat(fd, &statbuf)<0) {
+  if (fstat(fd, &statbuf)<0)
+  {
     int save_errno = errno;
-    close(fd);
+
+	#if defined(_MSC_VER)
+	  _close(fd);
+    #else
+	  close(fd);
+    #endif
+
     log_warn(LD_FS,"Could not fstat \"%s\".",filename);
     errno = save_errno;
     return NULL;
@@ -2405,7 +2477,12 @@ read_file_to_str(const char *filename, int flags, struct stat *stat_out)
 #endif
 
   if ((uint64_t)(statbuf.st_size)+1 >= SIZE_T_CEILING) {
-    close(fd);
+	#if defined(_MSC_VER)
+	  _close(fd);
+    #else
+	  close(fd);
+    #endif
+    
     return NULL;
   }
 

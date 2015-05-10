@@ -650,7 +650,12 @@ read_bandwidth_usage(void)
     char *fname = get_datadir_fname("bw_accounting");
     int res;
 
-    res = unlink(fname);
+	#if defined(_MSC_VER)
+	  res = _unlink(fname);
+    #else
+	  res = unlink(fname);
+    #endif
+    
     if (res != 0) {
       log_warn(LD_FS,
                "Failed to unlink %s: %s",

@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{062C6856-A2B0-41F9-9C24-63EA0DAD4189}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>LibOnionRoute</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBONIONROUTE_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\opensslbin\include;C:\zlib-1.2.8;C:\libevent-2.0.22-stable\WIN32-Code;C:\libevent-2.0.22-stable\include;..\..\LibOnionRoute\src\ext;..\..\LibOnionRoute\src\or;..\..\LibOnionRoute\src\win32;..\..\LibOnionRoute\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;libevent.lib;libevent_core.lib;libevent_extras.lib;ssleay32.lib;zlibstat.lib;libeay32.lib;Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\opensslbin\lib;C:\libevent-2.0.22-stable;C:\zlib-1.2.8\contrib\vstudio\vc11\x86\ZlibStatRelease;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBONIONROUTE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common\address.h" />
+    <ClInclude Include="..\src\common\aes.h" />
+    <ClInclude Include="..\src\common\backtrace.h" />
+    <ClInclude Include="..\src\common\compat.h" />
+    <ClInclude Include="..\src\common\compat_libevent.h" />
+    <ClInclude Include="..\src\common\container.h" />
+    <ClInclude Include="..\src\common\crypto.h" />
+    <ClInclude Include="..\src\common\crypto_curve25519.h" />
+    <ClInclude Include="..\src\common\di_ops.h" />
+    <ClInclude Include="..\src\common\memarea.h" />
+    <ClInclude Include="..\src\common\mempool.h" />
+    <ClInclude Include="..\src\common\procmon.h" />
+    <ClInclude Include="..\src\common\sandbox.h" />
+    <ClInclude Include="..\src\common\testsupport.h" />
+    <ClInclude Include="..\src\common\torgzip.h" />
+    <ClInclude Include="..\src\common\torint.h" />
+    <ClInclude Include="..\src\common\torlog.h" />
+    <ClInclude Include="..\src\common\tortls.h" />
+    <ClInclude Include="..\src\common\util.h" />
+    <ClInclude Include="..\src\common\util_process.h" />
+    <ClInclude Include="..\src\or\addressmap.h" />
+    <ClInclude Include="..\src\or\buffers.h" />
+    <ClInclude Include="..\src\or\channel.h" />
+    <ClInclude Include="..\src\or\channeltls.h" />
+    <ClInclude Include="..\src\or\circpathbias.h" />
+    <ClInclude Include="..\src\or\circuitbuild.h" />
+    <ClInclude Include="..\src\or\circuitlist.h" />
+    <ClInclude Include="..\src\or\circuitmux.h" />
+    <ClInclude Include="..\src\or\circuitmux_ewma.h" />
+    <ClInclude Include="..\src\or\circuitstats.h" />
+    <ClInclude Include="..\src\or\circuituse.h" />
+    <ClInclude Include="..\src\or\command.h" />
+    <ClInclude Include="..\src\or\config.h" />
+    <ClInclude Include="..\src\or\confparse.h" />
+    <ClInclude Include="..\src\or\connection.h" />
+    <ClInclude Include="..\src\or\connection_edge.h" />
+    <ClInclude Include="..\src\or\connection_or.h" />
+    <ClInclude Include="..\src\or\control.h" />
+    <ClInclude Include="..\src\or\cpuworker.h" />
+    <ClInclude Include="..\src\or\directory.h" />
+    <ClInclude Include="..\src\or\dirserv.h" />
+    <ClInclude Include="..\src\or\dirvote.h" />
+    <ClInclude Include="..\src\or\dns.h" />
+    <ClInclude Include="..\src\or\dnsserv.h" />
+    <ClInclude Include="..\src\or\entrynodes.h" />
+    <ClInclude Include="..\src\or\eventdns_tor.h" />
+    <ClInclude Include="..\src\or\ext_orport.h" />
+    <ClInclude Include="..\src\or\fp_pair.h" />
+    <ClInclude Include="..\src\or\geoip.h" />
+    <ClInclude Include="..\src\or\hibernate.h" />
+    <ClInclude Include="..\src\or\main.h" />
+    <ClInclude Include="..\src\or\microdesc.h" />
+    <ClInclude Include="..\src\or\networkstatus.h" />
+    <ClInclude Include="..\src\or\nodelist.h" />
+    <ClInclude Include="..\src\or\ntmain.h" />
+    <ClInclude Include="..\src\or\onion.h" />
+    <ClInclude Include="..\src\or\onion_fast.h" />
+    <ClInclude Include="..\src\or\onion_ntor.h" />
+    <ClInclude Include="..\src\or\onion_tap.h" />
+    <ClInclude Include="..\src\or\or.h" />
+    <ClInclude Include="..\src\or\policies.h" />
+    <ClInclude Include="..\src\or\reasons.h" />
+    <ClInclude Include="..\src\or\relay.h" />
+    <ClInclude Include="..\src\or\rendclient.h" />
+    <ClInclude Include="..\src\or\rendcommon.h" />
+    <ClInclude Include="..\src\or\rendmid.h" />
+    <ClInclude Include="..\src\or\rendservice.h" />
+    <ClInclude Include="..\src\or\rephist.h" />
+    <ClInclude Include="..\src\or\replaycache.h" />
+    <ClInclude Include="..\src\or\router.h" />
+    <ClInclude Include="..\src\or\routerlist.h" />
+    <ClInclude Include="..\src\or\routerparse.h" />
+    <ClInclude Include="..\src\or\routerset.h" />
+    <ClInclude Include="..\src\or\statefile.h" />
+    <ClInclude Include="..\src\or\status.h" />
+    <ClInclude Include="..\src\or\transports.h" />
+    <ClInclude Include="..\src\win32\orconfig.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\common\address.c" />
+    <ClCompile Include="..\src\common\aes.c" />
+    <ClCompile Include="..\src\common\backtrace.c" />
+    <ClCompile Include="..\src\common\compat.c" />
+    <ClCompile Include="..\src\common\compat_libevent.c" />
+    <ClCompile Include="..\src\common\container.c" />
+    <ClCompile Include="..\src\common\crypto.c" />
+    <ClCompile Include="..\src\common\crypto_curve25519.c" />
+    <ClCompile Include="..\src\common\crypto_format.c" />
+    <ClCompile Include="..\src\common\di_ops.c" />
+    <ClCompile Include="..\src\common\log.c" />
+    <ClCompile Include="..\src\common\memarea.c" />
+    <ClCompile Include="..\src\common\mempool.c" />
+    <ClCompile Include="..\src\common\procmon.c" />
+    <ClCompile Include="..\src\common\sandbox.c" />
+    <ClCompile Include="..\src\common\torgzip.c" />
+    <ClCompile Include="..\src\common\tortls.c" />
+    <ClCompile Include="..\src\common\util.c" />
+    <ClCompile Include="..\src\common\util_codedigest.c" />
+    <ClCompile Include="..\src\common\util_process.c" />
+    <ClCompile Include="..\src\ext\csiphash.c" />
+    <ClCompile Include="..\src\ext\curve25519_donna\curve25519-donna.c" />
+    <ClCompile Include="..\src\or\addressmap.c" />
+    <ClCompile Include="..\src\or\buffers.c" />
+    <ClCompile Include="..\src\or\channel.c" />
+    <ClCompile Include="..\src\or\channeltls.c" />
+    <ClCompile Include="..\src\or\circpathbias.c" />
+    <ClCompile Include="..\src\or\circuitbuild.c" />
+    <ClCompile Include="..\src\or\circuitlist.c" />
+    <ClCompile Include="..\src\or\circuitmux.c" />
+    <ClCompile Include="..\src\or\circuitmux_ewma.c" />
+    <ClCompile Include="..\src\or\circuitstats.c" />
+    <ClCompile Include="..\src\or\circuituse.c" />
+    <ClCompile Include="..\src\or\command.c" />
+    <ClCompile Include="..\src\or\config.c" />
+    <ClCompile Include="..\src\or\config_codedigest.c" />
+    <ClCompile Include="..\src\or\confparse.c" />
+    <ClCompile Include="..\src\or\connection.c" />
+    <ClCompile Include="..\src\or\connection_edge.c" />
+    <ClCompile Include="..\src\or\connection_or.c" />
+    <ClCompile Include="..\src\or\control.c" />
+    <ClCompile Include="..\src\or\cpuworker.c" />
+    <ClCompile Include="..\src\or\directory.c" />
+    <ClCompile Include="..\src\or\dirserv.c" />
+    <ClCompile Include="..\src\or\dirvote.c" />
+    <ClCompile Include="..\src\or\dns.c" />
+    <ClCompile Include="..\src\or\dnsserv.c" />
+    <ClCompile Include="..\src\or\entrynodes.c" />
+    <ClCompile Include="..\src\or\ext_orport.c" />
+    <ClCompile Include="..\src\or\fp_pair.c" />
+    <ClCompile Include="..\src\or\geoip.c" />
+    <ClCompile Include="..\src\or\hibernate.c" />
+    <ClCompile Include="..\src\or\main.c" />
+    <ClCompile Include="..\src\or\microdesc.c" />
+    <ClCompile Include="..\src\or\networkstatus.c" />
+    <ClCompile Include="..\src\or\nodelist.c" />
+    <ClCompile Include="..\src\or\ntmain.c" />
+    <ClCompile Include="..\src\or\onion.c" />
+    <ClCompile Include="..\src\or\onion_fast.c" />
+    <ClCompile Include="..\src\or\onion_ntor.c" />
+    <ClCompile Include="..\src\or\onion_tap.c" />
+    <ClCompile Include="..\src\or\policies.c" />
+    <ClCompile Include="..\src\or\reasons.c" />
+    <ClCompile Include="..\src\or\relay.c" />
+    <ClCompile Include="..\src\or\rendclient.c" />
+    <ClCompile Include="..\src\or\rendcommon.c" />
+    <ClCompile Include="..\src\or\rendmid.c" />
+    <ClCompile Include="..\src\or\rendservice.c" />
+    <ClCompile Include="..\src\or\rephist.c" />
+    <ClCompile Include="..\src\or\replaycache.c" />
+    <ClCompile Include="..\src\or\router.c" />
+    <ClCompile Include="..\src\or\routerlist.c" />
+    <ClCompile Include="..\src\or\routerparse.c" />
+    <ClCompile Include="..\src\or\routerset.c" />
+    <ClCompile Include="..\src\or\statefile.c" />
+    <ClCompile Include="..\src\or\status.c" />
+    <ClCompile Include="..\src\or\tor_main.c" />
+    <ClCompile Include="..\src\or\transports.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
