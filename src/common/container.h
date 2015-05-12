@@ -2,7 +2,8 @@
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
  * Copyright (c) 2007-2013, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
-
+/* Copyright (c) 2013-2015 Waldo Alvarez Cañizares, https://github.com/waldoalvarez00/LibOnionRoute */
+/* See LICENSE for licensing information */
 #ifndef TOR_CONTAINER_H
 #define TOR_CONTAINER_H
 

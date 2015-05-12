@@ -1,4 +1,4 @@
-/* Copyright (c) 2013 Waldo Alvarez Cañizares, http://onionroute.org */
+/* Copyright (c) 2013-2015 Waldo Alvarez Cañizares, https://github.com/waldoalvarez00/LibOnionRoute */
 /* See LICENSE for licensing information */
 
 #include "stdafx.h"
