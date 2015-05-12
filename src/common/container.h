@@ -25,6 +25,11 @@ typedef struct smartlist_t {
   int num_used;
   int capacity;
   /** @} */
+
+  #ifdef LIBRARY
+  tor_mutex_t *lock;
+  #endif
+
 } smartlist_t;
 
 smartlist_t *smartlist_new(void);

@@ -63,6 +63,10 @@
 #include "memarea.h"
 #include "../common/sandbox.h"
 
+#ifdef LIBRARY
+#include "../libtor_internal.h"
+#endif
+
 #ifdef HAVE_EVENT2_EVENT_H
 #include <event2/event.h>
 #else
@@ -72,6 +76,8 @@
 #ifdef USE_BUFFEREVENTS
 #include <event2/bufferevent.h>
 #endif
+
+
 
 void evdns_shutdown(int);
 
@@ -230,10 +236,20 @@ int
 connection_add_impl(connection_t *conn, int is_connecting)
 {
   tor_assert(conn);
+
+#ifdef LIBRARY
+    tor_assert(conn);
+  tor_assert(SOCKET_OK(conn->s) ||
+             conn->linked ||
+             (conn->type == CONN_TYPE_AP &&
+             (TO_EDGE_CONN(conn)->is_dns_request) || TO_EDGE_CONN(conn)->is_onionroute_request));
+#else
+
   tor_assert(SOCKET_OK(conn->s) ||
              conn->linked ||
              (conn->type == CONN_TYPE_AP &&
               TO_EDGE_CONN(conn)->is_dns_request));
+#endif
 
   tor_assert(conn->conn_array_index == -1); /* can only connection_add once */
   conn->conn_array_index = smartlist_len(connection_array);
@@ -372,6 +388,27 @@ connection_remove(connection_t *conn)
   return 0;
 }
 
+
+#ifdef LIBRARY
+
+onionroute_event_stream_close_t_v1 closecallback = 0;
+
+ONIONROUTE_API
+void onionroute_set_stream_close_callback_v1(onionroute_event_stream_close_t_v1 callback)
+{
+	closecallback = callback;
+}
+
+onionroute_event_stream_close_t_v2 closecallback2 = 0;
+
+ONIONROUTE_API
+void onionroute_set_stream_close_callback_v2(onionroute_event_stream_close_t_v2 callback)
+{
+	closecallback2 = callback;
+}
+#endif
+
+
 /** If <b>conn</b> is an edge conn, remove it from the list
  * of conn's on this circuit. If it's not on an edge,
  * flush and send destroys for all circuits on this conn.
@@ -416,6 +453,28 @@ connection_unlink(connection_t *conn)
      * with an orconn.
      */
   }
+
+#ifdef LIBRARY
+
+  if(conn->type == CONN_TYPE_AP)
+  {
+	  edge_connection_t *c2 = TO_EDGE_CONN(conn);
+	  if(c2->is_onionroute_request)
+	  {
+		  if(closecallback2)
+		  {
+			  closecallback2(c2, c2->obj);
+		  }
+		  else if(closecallback)
+		  {
+			  closecallback(c2);
+		  }
+	  }
+  }
+
+			
+#endif
+
   connection_free(conn);
 }
 
@@ -1778,6 +1837,37 @@ refill_callback(periodic_timer_t *timer, void *arg)
 }
 #endif
 
+#ifdef LIBRARY
+
+/** Timer: used to invoke command pooling(). */
+static periodic_timer_t *onionroute_timer = NULL;
+
+/* XXX remove me once library is re-entrant */
+/* command queue */
+smartlist_t *cqueue;
+
+/* XXX remove me once library is re-entrant */
+/** Libevent callback: invoked periodically to read commands and permit multithreaded access to libtor. */
+static void
+onionroute_timer_callback(periodic_timer_t *timer, void *arg)
+{
+	onionroute_command_t *cmd;
+
+	/* lock the smartlist before so we process it in order */
+	smartlist_lock(cqueue);
+
+	smartlist_reverse(cqueue);
+
+	while(NULL != (cmd = (onionroute_command_t *)smartlist_pop_last(cqueue)))
+	{
+		cmd->processor(cmd->data);
+		tor_free(cmd);
+	}
+
+	smartlist_unlock(cqueue);
+}
+#endif
+
 #ifndef _WIN32
 /** Called when a possibly ignorable libevent error occurs; ensures that we
  * don't get into an infinite loop by ignoring too many errors from
@@ -1905,10 +1995,15 @@ do_hup(void)
   return 0;
 }
 
+
 /** Tor main loop. */
+#ifdef LIBRARY
+ONIONROUTE_API
+int onionroute_do_main_loop_v1(void){
+#else
 int
-do_main_loop(void)
-{
+do_main_loop(void){
+#endif
   int loop_result;
   time_t now;
 
@@ -2007,9 +2102,30 @@ do_main_loop(void)
   }
 #endif
 
+#ifdef LIBRARY
+
+  /* XXX remove me once library is re-entrant */
+  /* probably a better approach would be to send a signal */
+  if (!onionroute_timer) {
+    struct timeval refill_interval;
+    int msecs = 200;
+
+    refill_interval.tv_sec =  msecs/1000;
+    refill_interval.tv_usec = (msecs%1000)*1000;
+
+    onionroute_timer = periodic_timer_new(tor_libevent_get_base(),
+                                      &refill_interval,
+                                      onionroute_timer_callback,
+                                      NULL);
+    tor_assert(onionroute_timer);
+  }
+#endif
+
   for (;;) {
+#ifndef LIBRARY
     if (nt_service_is_stopping())
       return 0;
+#endif
 
 #ifndef _WIN32
     /* Make it easier to tell whether libevent failure is our fault or not. */
@@ -2746,6 +2862,9 @@ find_flashcard_path(PWCHAR path, size_t size)
 }
 #endif
 
+
+
+
 static void
 init_addrinfo(void)
 {
@@ -2967,6 +3086,484 @@ sandbox_init_filter(void)
   return cfg;
 }
 
+
+#ifdef LIBRARY
+
+/* XXX : Fixme this is win32 specific */
+HANDLE ghReadEvent;
+smartlist_t *readqueue;
+smartlist_t *closequeue;
+
+
+
+
+typedef struct onionroute_buffer_chunk_t
+{
+
+  char* data;
+  size_t size;
+  void *id;
+
+} onionroute_buffer_chunk_t;
+
+typedef struct onionroute_close_chunk_t
+{
+
+  void *id;
+
+} onionroute_close_chunk_t;
+
+ONIONROUTE_API
+int
+onionroute_queue_recvd_data_v1(void *id, size_t len, char* data)
+{
+	onionroute_buffer_chunk_t *datachunk;
+	char *ndata;
+
+	datachunk = tor_malloc(sizeof(onionroute_buffer_chunk_t));
+
+	ndata = tor_malloc(len);
+	memcpy(ndata, data, len);
+
+	datachunk->id = id;
+	datachunk->size = len;
+	datachunk->data = ndata;
+
+	smartlist_add(readqueue, datachunk);
+
+	/* signal event */
+
+	if (!SetEvent(ghReadEvent))
+    {
+        log_err(LD_BUG,"SetEvent failed (%d)\n", GetLastError());
+        return -1;
+    }
+
+
+	return 0;
+}
+
+ONIONROUTE_API
+int
+onionroute_queue_closed_stream_v1(void *id)
+{
+	onionroute_close_chunk_t *datachunk;
+
+	datachunk = tor_malloc(sizeof(onionroute_close_chunk_t));
+
+	datachunk->id = id;
+
+	smartlist_add(closequeue, datachunk);
+
+	/* signal event */
+
+	if (!SetEvent(ghReadEvent))
+    {
+        log_err(LD_BUG,"SetEvent failed (%d)\n", GetLastError());
+        return -1;
+    }
+
+
+	return 0;
+}
+
+ONIONROUTE_API
+int
+onionroute_recv_stream_data_v1(void *id, char* buffer, size_t buffersize)
+{
+	DWORD dwWaitResult;
+	onionroute_buffer_chunk_t *datachunk;
+	onionroute_close_chunk_t *closechunk;
+	smartlist_t *nreadqueue;
+	smartlist_t *nclosequeue;
+
+	smartlist_t *oreadqueue;
+	smartlist_t *oclosequeue;
+
+	char *ndata;
+	size_t nsize;
+	size_t rsize;
+
+	rsize = -1; /* assume connection is going to return error back */
+
+	/* XXX: Fixme, this function uses Windows API, not portable */
+	dwWaitResult = WaitForSingleObject( 
+        ghReadEvent, // event handle
+        INFINITE);    // indefinite wait
+
+    switch (dwWaitResult) 
+    {
+        /* Event object was signaled */
+        case WAIT_OBJECT_0: 
+            
+			nreadqueue = smartlist_new();
+			nclosequeue = smartlist_new();
+
+			while(NULL != (closechunk = smartlist_pop_last(closequeue)))
+			{
+				if(id == closechunk->id)
+				{
+					/* the connection we are reading from was closed */
+					tor_free(closechunk);
+
+					/* keep popping to new queue */
+					while(NULL != (closechunk = smartlist_pop_last(closequeue)))
+			        {
+						smartlist_add(nclosequeue, closechunk);
+					}
+
+					oclosequeue = closequeue;
+			        closequeue = nclosequeue;
+			        smartlist_free(oclosequeue);
+
+
+					/* just remove them from to read queue and return error */
+
+					while(NULL != (datachunk = smartlist_pop_last(readqueue)))
+			        {
+				      if(datachunk->id != id)
+				      {
+						  smartlist_add(nreadqueue, datachunk);
+				      }
+					  else
+					  {
+						  tor_free(datachunk);
+					  }
+					}
+
+					oreadqueue = readqueue;
+					readqueue = nreadqueue;
+					smartlist_free(oreadqueue);
+
+					return -1;
+				}
+				else
+				{
+					smartlist_add(nclosequeue, closechunk);
+				}
+			}
+
+			oclosequeue = closequeue;
+			closequeue = nclosequeue;
+			smartlist_free(oclosequeue);
+
+			while(NULL != (datachunk = smartlist_pop_last(readqueue)))
+			{
+				if(datachunk->id == id)
+				{
+					/* found the one I need */
+					if(datachunk->size > buffersize)
+					{
+						nsize = datachunk->size - buffersize;
+						ndata = tor_malloc(nsize);
+
+						memcpy(buffer, datachunk->data, buffersize);
+						memcpy(ndata, &datachunk->data[buffersize], nsize);
+
+						tor_free(datachunk->data);
+
+						datachunk->data = ndata;
+						datachunk->size = nsize;
+
+						smartlist_add(nreadqueue, datachunk);
+
+						rsize = buffersize;
+					}
+					else
+					{
+						rsize = datachunk->size;
+						memcpy(buffer, datachunk->data, rsize);
+						tor_free(datachunk);
+					}
+				}
+				else
+				  smartlist_add(nreadqueue, datachunk);
+			}
+
+			
+			oreadqueue = readqueue;
+			readqueue = nreadqueue;
+			smartlist_free(oreadqueue);
+			
+			return rsize;
+			
+            //break; 
+
+        /* An error occurred */
+        default: 
+            log_err(LD_BUG,"Wait error (%d)", GetLastError()); 
+            return -1; 
+    }
+
+
+}
+
+ONIONROUTE_API
+int onionroute_shutdown_v1()
+{
+	CloseHandle(ghReadEvent);
+	smartlist_free(readqueue);
+	smartlist_free(closequeue);
+	return 0;
+}
+
+
+#if 0
+ONIONROUTE_API
+int onionroute_init_v1()
+{
+  int result = 0;
+#if defined (WINCE)
+  WCHAR path [MAX_PATH] = {0};
+  WCHAR fullpath [MAX_PATH] = {0};
+  PWCHAR p = NULL;
+  FILE* redir = NULL;
+  FILE* redirdbg = NULL;
+
+  // this is to facilitate debugging by opening
+  // a file on a folder shared by the wm emulator.
+  // if no flashcard (real or emulated) is present,
+  // log files will be written in the root folder
+  if (find_flashcard_path(path,MAX_PATH) == -1) {
+    redir = _wfreopen( L"\\stdout.log", L"w", stdout );
+    redirdbg = _wfreopen( L"\\stderr.log", L"w", stderr );
+  } else {
+    swprintf(fullpath,L"\\%s\\tor",path);
+    CreateDirectory(fullpath,NULL);
+
+    swprintf(fullpath,L"\\%s\\tor\\stdout.log",path);
+    redir = _wfreopen( fullpath, L"w", stdout );
+
+    swprintf(fullpath,L"\\%s\\tor\\stderr.log",path);
+    redirdbg = _wfreopen( fullpath, L"w", stderr );
+  }
+#endif
+
+  /* XXX remove me once library is re-entrant */
+	/* initialize library command queue */
+	readqueue = smartlist_new();
+
+
+	ghReadEvent = CreateEvent( 
+        NULL,               // default security attributes
+        TRUE,               // manual-reset event
+        FALSE,              // initial state is nonsignaled
+        TEXT("ReadEvent")  // object name
+        ); 
+
+    if (ghReadEvent == NULL) 
+    {
+		log_err(LD_BUG, "CreateEvent failed (%d). Closing", GetLastError());
+		return -1;
+    }
+
+	readqueue = smartlist_new();
+	closequeue = smartlist_new();
+	cqueue = smartlist_new();
+
+
+
+
+
+#ifdef _WIN32
+  /* Call SetProcessDEPPolicy to permanently enable DEP.
+     The function will not resolve on earlier versions of Windows,
+     and failure is not dangerous. */
+  HMODULE hMod = GetModuleHandleA("Kernel32.dll");
+  if (hMod) {
+    typedef BOOL (WINAPI *PSETDEP)(DWORD);
+    PSETDEP setdeppolicy = (PSETDEP)GetProcAddress(hMod,
+                           "SetProcessDEPPolicy");
+    if (setdeppolicy) setdeppolicy(1); /* PROCESS_DEP_ENABLE */
+  }
+#endif
+
+  configure_backtrace_handler(get_version());
+
+  update_approx_time(time(NULL));
+  tor_threads_init();
+  init_logging();
+#ifdef USE_DMALLOC
+  {
+    /* Instruct OpenSSL to use our internal wrappers for malloc,
+       realloc and free. */
+    int r = CRYPTO_set_mem_ex_functions(tor_malloc_, tor_realloc_, tor_free_);
+    tor_assert(r);
+  }
+#endif
+#ifdef NT_SERVICE
+  {
+     int done = 0;
+     result = nt_service_parse_options(argc, argv, &done);
+     if (done) return result;
+  }
+#endif
+  if (tor_init(argc, argv)<0)
+    return -1;
+
+  if (get_options()->Sandbox && get_options()->command == CMD_RUN_TOR) {
+    sandbox_cfg_t* cfg = sandbox_init_filter();
+
+    if (sandbox_init(cfg)) {
+      log_err(LD_BUG,"Failed to create syscall sandbox filter");
+      return -1;
+    }
+
+    // registering libevent rng
+#ifdef HAVE_EVUTIL_SECURE_RNG_SET_URANDOM_DEVICE_FILE
+    evutil_secure_rng_set_urandom_device_file(
+        (char*) sandbox_intern_string("/dev/urandom"));
+#endif
+  }
+
+  switch (get_options()->command) {
+  case CMD_RUN_TOR:
+#ifdef NT_SERVICE
+    nt_service_set_state(SERVICE_RUNNING);
+#endif
+    result = do_main_loop();
+    break;
+  case CMD_LIST_FINGERPRINT:
+    result = do_list_fingerprint();
+    break;
+  case CMD_HASH_PASSWORD:
+    do_hash_password();
+    result = 0;
+    break;
+  case CMD_VERIFY_CONFIG:
+    printf("Configuration was valid\n");
+    result = 0;
+    break;
+  case CMD_DUMP_CONFIG:
+    result = do_dump_config();
+    break;
+  case CMD_RUN_UNITTESTS: /* only set by test.c */
+  default:
+    log_warn(LD_BUG,"Illegal command number %d: internal error.",
+             get_options()->command);
+    result = -1;
+  }
+  tor_cleanup();
+  return result;
+}
+#endif
+
+/** Main entry point for the Tor process.  Called from main(). */
+/* This function is distinct from main() only so we can link main.c into
+ * the unittest binary without conflicting with the unittests' main. */
+ONIONROUTE_API
+int onionroute_init_v1()
+{
+  int result = 0;
+#if defined (WINCE)
+  WCHAR path [MAX_PATH] = {0};
+  WCHAR fullpath [MAX_PATH] = {0};
+  PWCHAR p = NULL;
+  FILE* redir = NULL;
+  FILE* redirdbg = NULL;
+
+  // this is to facilitate debugging by opening
+  // a file on a folder shared by the wm emulator.
+  // if no flashcard (real or emulated) is present,
+  // log files will be written in the root folder
+  if (find_flashcard_path(path,MAX_PATH) == -1) {
+    redir = _wfreopen( L"\\stdout.log", L"w", stdout );
+    redirdbg = _wfreopen( L"\\stderr.log", L"w", stderr );
+  } else {
+    swprintf(fullpath,L"\\%s\\tor",path);
+    CreateDirectory(fullpath,NULL);
+
+    swprintf(fullpath,L"\\%s\\tor\\stdout.log",path);
+    redir = _wfreopen( fullpath, L"w", stdout );
+
+    swprintf(fullpath,L"\\%s\\tor\\stderr.log",path);
+    redirdbg = _wfreopen( fullpath, L"w", stderr );
+  }
+#endif
+
+
+ 
+
+
+
+#ifdef _WIN32
+  /* Call SetProcessDEPPolicy to permanently enable DEP.
+     The function will not resolve on earlier versions of Windows,
+     and failure is not dangerous. */
+  HMODULE hMod = GetModuleHandleA("Kernel32.dll");
+  if (hMod) {
+    typedef BOOL (WINAPI *PSETDEP)(DWORD);
+    PSETDEP setdeppolicy = (PSETDEP)GetProcAddress(hMod,
+                           "SetProcessDEPPolicy");
+    if (setdeppolicy) setdeppolicy(1); /* PROCESS_DEP_ENABLE */
+  }
+#endif
+
+   /* XXX remove me once library is re-entrant */
+	/* initialize library command queue */
+	readqueue = smartlist_new();
+
+
+	ghReadEvent = CreateEvent( 
+        NULL,               // default security attributes
+        TRUE,               // manual-reset event
+        FALSE,              // initial state is nonsignaled
+        TEXT("ReadEvent")  // object name
+        ); 
+
+    if (ghReadEvent == NULL) 
+    {
+		log_err(LD_BUG, "CreateEvent failed (%d). Closing", GetLastError());
+		return -1;
+    }
+
+	readqueue = smartlist_new();
+	closequeue = smartlist_new();
+	cqueue = smartlist_new();
+
+  configure_backtrace_handler(get_version());
+
+  update_approx_time(time(NULL));
+  tor_threads_init();
+  init_logging();
+#ifdef USE_DMALLOC
+  {
+    /* Instruct OpenSSL to use our internal wrappers for malloc,
+       realloc and free. */
+    int r = CRYPTO_set_mem_ex_functions(tor_malloc_, tor_realloc_, tor_free_);
+    tor_assert(r);
+  }
+#endif
+
+  if (tor_init(0, 0)<0)
+    return -1;
+
+  if (get_options()->Sandbox && get_options()->command == CMD_RUN_TOR) {
+    sandbox_cfg_t* cfg = sandbox_init_filter();
+
+    if (sandbox_init(cfg)) {
+      log_err(LD_BUG,"Failed to create syscall sandbox filter");
+      return -1;
+    }
+
+    // registering libevent rng
+#ifdef HAVE_EVUTIL_SECURE_RNG_SET_URANDOM_DEVICE_FILE
+    evutil_secure_rng_set_urandom_device_file(
+        (char*) sandbox_intern_string("/dev/urandom"));
+#endif
+  }
+
+  
+  return 0;
+}
+
+
+
+
+
+
+#else
+
 /** Main entry point for the Tor process.  Called from main(). */
 /* This function is distinct from main() only so we can link main.c into
  * the unittest binary without conflicting with the unittests' main. */
@@ -3082,3 +3679,4 @@ tor_main(int argc, char *argv[])
   return result;
 }
 
+#endif

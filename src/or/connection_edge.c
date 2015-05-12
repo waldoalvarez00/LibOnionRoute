@@ -1619,6 +1619,69 @@ connection_ap_handshake_process_socks(entry_connection_t *conn)
   return connection_ap_rewrite_and_attach_if_allowed(conn, NULL, NULL);
 }
 
+#ifdef LIBRARY
+
+int onionroute_connection_ap_process(entry_connection_t *entry_conn, char* address, int port, void* obj)
+{
+	edge_connection_t *conn;
+	socks_request_t *socks;
+
+	tor_assert(entry_conn);
+
+	conn = ENTRY_TO_EDGE_CONN(entry_conn);
+	tor_assert(entry_conn->socks_request);
+
+	TO_CONN(conn)->state = AP_CONN_STATE_RESOLVE_WAIT;
+
+	conn->is_onionroute_request = 1;
+	conn->obj = obj;
+
+	//tor_addr_copy(&TO_CONN(conn)->addr, &tor_addr);
+
+	TO_CONN(conn)->port = port;
+	TO_CONN(conn)->address = tor_strdup(address);
+	
+
+	entry_conn->socks_request->command = SOCKS_COMMAND_CONNECT;
+
+	//entry_conn->socks_request->command = SOCKS_COMMAND_RESOLVE;
+	//entry_conn->socks_request->command = SOCKS_COMMAND_RESOLVE_PTR;
+
+	/*strlcpy(entry_conn->socks_request->address, q->name,
+	sizeof(entry_conn->socks_request->address));*/
+	entry_conn->nym_epoch = get_signewnym_epoch();
+
+	socks = entry_conn->socks_request;
+
+	/* pretend that a socks handshake completed so we don't try to
+	* send a socks reply down a transparent conn, yes is an ugly hack but it was inherited */
+	socks->command = SOCKS_COMMAND_CONNECT;
+	socks->has_finished = 1;
+	socks->port = port;
+	strncpy(socks->address, address, sizeof(socks->address));
+
+	if (connection_add(ENTRY_TO_CONN(entry_conn)) < 0)
+	{
+		log_warn(LD_APP, "Couldn't register dummy connection for libonionroute request");
+		connection_free(ENTRY_TO_CONN(entry_conn));
+		return 0;
+	}
+
+	/* let controller know about this */
+	control_event_stream_status(conn, STREAM_EVENT_NEW, 0);
+
+	/* Now, unless a controller asked us to leave streams unattached,
+	* throw the connection over to get rewritten (which will
+	* answer it immediately if it's in the cache, or completely bogus, or
+	* automapped), and then attached to a circuit. */
+
+	connection_ap_rewrite_and_attach_if_allowed(entry_conn, NULL, NULL);
+
+	return 0;
+}
+
+#endif
+
 /** connection_init_accepted_conn() found a new trans AP conn.
  * Get the original destination and send it to
  * connection_ap_handshake_rewrite_and_attach().

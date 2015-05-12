@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOnionRoute", "LibOnionRoute.vcxproj", "{062C6856-A2B0-41F9-9C24-63EA0DAD4189}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "..\test\test.vcxproj", "{38476A21-5DC2-4076-9368-C9EA8C48EB93}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{062C6856-A2B0-41F9-9C24-63EA0DAD4189}.Debug|Win32.Build.0 = Debug|Win32
 		{062C6856-A2B0-41F9-9C24-63EA0DAD4189}.Release|Win32.ActiveCfg = Release|Win32
 		{062C6856-A2B0-41F9-9C24-63EA0DAD4189}.Release|Win32.Build.0 = Release|Win32
+		{38476A21-5DC2-4076-9368-C9EA8C48EB93}.Debug|Win32.ActiveCfg = Debug|Win32
+		{38476A21-5DC2-4076-9368-C9EA8C48EB93}.Debug|Win32.Build.0 = Debug|Win32
+		{38476A21-5DC2-4076-9368-C9EA8C48EB93}.Release|Win32.ActiveCfg = Release|Win32
+		{38476A21-5DC2-4076-9368-C9EA8C48EB93}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,3 +11,6 @@ visualstudioproject/Debug/cl.command.1.tlog
 *.dll
 *.lastbuildstate
 *.suo
+*.lib
+*.exe
+*.exp

@@ -9,6 +9,10 @@
  * \brief Functions to send messages to log files or the console.
  **/
 
+#ifdef LIBRARY
+#include "../onionroute.h"
+#endif
+
 #include "orconfig.h"
 #include <stdarg.h>
 #include <assert.h>
@@ -329,6 +333,50 @@ format_msg(char *buf, size_t buf_len,
   return end_of_prefix;
 }
 
+#ifdef LIBRARY
+
+char *
+onionroute_format_msg_v1(char *buf, size_t buf_len,
+           log_domain_mask_t domain, int severity, const char *funcname,
+           const char *format, va_list ap, size_t *msg_len_out)
+{
+	return format_msg(buf, buf_len, domain, severity, funcname, "", format, ap, msg_len_out);
+}
+
+#endif
+
+/** Helper: sends a message to the appropriate logfiles, at loglevel
+ * <b>severity</b>.  If provided, <b>funcname</b> is prepended to the
+ * message.  The actual message is derived as from tor_snprintf(format,ap).
+ */
+
+#ifdef LIBRARY
+
+onionroute_log_callback_t_v1 i_log_callback = 0;
+
+void onionroute_set_log_callback_v1(onionroute_log_callback_t_v1 c)
+{
+	i_log_callback = c;
+}
+
+MOCK_IMPL(STATIC void,
+logv,(int severity, log_domain_mask_t domain, const char *funcname,
+     const char *suffix, const char *format, va_list ap))
+{
+	/* Call assert, not tor_assert, since tor_assert calls log on failure. */
+    assert(format);
+    /* check that severity is sane.  Overrunning the masks array leads to
+     * interesting and hard to diagnose effects */
+    assert(severity >= LOG_ERR && severity <= LOG_DEBUG);
+
+	if(i_log_callback)
+	{
+		i_log_callback(severity, domain, funcname, format, ap);
+	}
+}
+
+#else
+
 /** Helper: sends a message to the appropriate logfiles, at loglevel
  * <b>severity</b>.  If provided, <b>funcname</b> is prepended to the
  * message.  The actual message is derived as from tor_snprintf(format,ap).
@@ -424,6 +472,8 @@ logv,(int severity, log_domain_mask_t domain, const char *funcname,
   }
   UNLOCK_LOGS();
 }
+
+#endif
 
 /** Output a message to the log.  It gets logged to all logfiles that
  * care about messages with <b>severity</b> in <b>domain</b>. The content

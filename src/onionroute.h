@@ -145,11 +145,13 @@ onionroute_set_stream_close_callback_v2(onionroute_event_stream_close_t_v2 callb
 
 /* stream open */
 typedef void (*onionroute_event_stream_open_t_v1)(void *);
+
 ONIONROUTE_API
 void
 onionroute_set_stream_open_callback_v1(onionroute_event_stream_open_t_v1 callback);
 
 typedef void (*onionroute_event_stream_open_t_v2)(void *, void *);
+
 ONIONROUTE_API
 void
 onionroute_set_stream_open_callback_v2(onionroute_event_stream_open_t_v2 callback);

@@ -14,6 +14,10 @@
 
 #include "orconfig.h"
 
+#ifdef LIBRARY
+#include "../onionroute.h"
+#endif
+
 #ifdef __COVERITY__
 /* If we're building for a static analysis, turn on all the off-by-default
  * features. */
@@ -1559,6 +1563,17 @@ typedef struct edge_connection_t {
 
   /** True iff this connection is for a DNS request only. */
   unsigned int is_dns_request:1;
+
+
+
+  #ifdef LIBRARY
+  /** True iff this connection is for a libtor request only. */
+  unsigned int is_onionroute_request:1;
+  void *obj;
+  #endif
+
+
+
   /** True iff this connection is for a PTR DNS request. (exit only) */
   unsigned int is_reverse_dns_lookup:1;
 
@@ -2881,6 +2896,11 @@ typedef struct circuit_t {
    * circuit's queues; used only if CELL_STATS events are enabled and
    * cleared after being sent to control port. */
   smartlist_t *testing_cell_stats;
+
+  #ifdef LIBRARY
+  tor_mutex_t *lock;
+  #endif
+
 } circuit_t;
 
 /** Largest number of relay_early cells that we can send on a given
@@ -3120,6 +3140,11 @@ typedef struct origin_circuit_t {
    * adjust_exit_policy_from_exitpolicy_failure.
    */
   smartlist_t *prepend_policy;
+
+  #ifdef LIBRARY
+  tor_mutex_t *lock;
+  #endif
+
 } origin_circuit_t;
 
 struct onion_queue_t;
@@ -3206,6 +3231,11 @@ typedef struct or_circuit_t {
    * to zero, it is initialized to the default value.
    */
   uint32_t max_middle_cells;
+
+  #ifdef LIBRARY
+  tor_mutex_t *lock;
+  #endif
+
 } or_circuit_t;
 
 typedef struct or_circuit_rendinfo_s {
@@ -4589,8 +4619,11 @@ typedef enum buildtimeout_set_event_t {
       enable_control_logging();                                         \
   STMT_END
 
+#if !defined LIBRARY
+
 /** Enum describing various stages of bootstrapping, for use with controller
  * bootstrap status events. The values range from 0 to 100. */
+
 typedef enum {
   BOOTSTRAP_STATUS_UNDEF=-1,
   BOOTSTRAP_STATUS_STARTING=0,
@@ -4608,6 +4641,12 @@ typedef enum {
   BOOTSTRAP_STATUS_CIRCUIT_CREATE=90,
   BOOTSTRAP_STATUS_DONE=100
 } bootstrap_status_t;
+
+#else
+
+typedef bootstrap_status_t_v1 bootstrap_status_t;
+
+#endif
 
 /********************************* directory.c ***************************/
 

@@ -13,6 +13,8 @@ const char tor_git_revision[] =
 #endif
   "";
 
+#ifndef LIBRARY
+
 /**
  * \file tor_main.c
  * \brief Stub module containing a main() function. Allows unit
@@ -30,3 +32,4 @@ main(int argc, char *argv[])
   return tor_main(argc, argv);
 }
 
+#endif

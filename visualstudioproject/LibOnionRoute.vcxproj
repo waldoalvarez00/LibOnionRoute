@@ -50,7 +50,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBONIONROUTE_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LIBRARY;DLL_EXPORTS;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBONIONROUTE_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\opensslbin\include;C:\zlib-1.2.8;C:\libevent-2.0.22-stable\WIN32-Code;C:\libevent-2.0.22-stable\include;..\..\LibOnionRoute\src\ext;..\..\LibOnionRoute\src\or;..\..\LibOnionRoute\src\win32;..\..\LibOnionRoute\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -218,7 +218,6 @@
     <ClCompile Include="..\src\or\microdesc.c" />
     <ClCompile Include="..\src\or\networkstatus.c" />
     <ClCompile Include="..\src\or\nodelist.c" />
-    <ClCompile Include="..\src\or\ntmain.c" />
     <ClCompile Include="..\src\or\onion.c" />
     <ClCompile Include="..\src\or\onion_fast.c" />
     <ClCompile Include="..\src\or\onion_ntor.c" />

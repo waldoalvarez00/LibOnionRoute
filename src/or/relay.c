@@ -975,6 +975,25 @@ remap_event_helper(entry_connection_t *conn, const tor_addr_t *new_addr)
                               REMAP_STREAM_SOURCE_EXIT);
 }
 
+#ifdef LIBRARY
+
+onionroute_event_stream_open_t_v1 opencall = 0;
+
+ONIONROUTE_API
+void onionroute_set_stream_open_callback_v1(onionroute_event_stream_open_t_v1 callback)
+{
+	opencall = callback;
+}
+
+onionroute_event_stream_open_t_v2 opencall_v2 = 0;
+ONIONROUTE_API
+void onionroute_set_stream_open_callback_v2(onionroute_event_stream_open_t_v2 callback)
+{
+	opencall_v2 = callback;
+}
+
+#endif
+
 /** Extract the contents of a connected cell in <b>cell</b>, whose relay
  * header has already been parsed into <b>rh</b>. On success, set
  * <b>addr_out</b> to the address we're connected to, and <b>ttl_out</b> to
@@ -1385,6 +1404,15 @@ connection_edge_process_relay_cell_not_open(
       connection_mark_for_close(TO_CONN(conn));
       return 0;
     }
+
+	#ifdef LIBRARY
+	if((conn)->is_onionroute_request)
+    {
+	  if (opencall) opencall(conn);
+	  if (opencall_v2) opencall_v2(conn, conn->obj);
+    }
+    #endif
+
     return 0;
   }
   if (conn->base_.type == CONN_TYPE_AP &&
@@ -1401,6 +1429,23 @@ connection_edge_process_relay_cell_not_open(
 //  connection_mark_for_close(conn);
 //  return -1;
 }
+
+#ifdef LIBRARY
+
+onionroute_event_stream_data_received_t_v1 data_received_callback = 0;
+onionroute_event_stream_data_received_t_v2 data_received_callback_v2 = 0;
+
+void onionroute_set_stream_data_received_callback_v1(onionroute_event_stream_data_received_t_v1 callback)
+{
+	data_received_callback = callback;
+}
+
+void onionroute_set_stream_data_received_callback_v2(onionroute_event_stream_data_received_t_v2 callback)
+{
+	data_received_callback_v2 = callback;
+}
+
+#endif
 
 /** An incoming relay cell has arrived on circuit <b>circ</b>. If
  * <b>conn</b> is NULL this is a control cell, else <b>cell</b> is
@@ -1547,8 +1592,25 @@ connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
       }
 
       stats_n_data_bytes_received += rh.length;
+
+#ifdef LIBRARY
+
+	  if(conn->is_onionroute_request)
+	  {
+		  if(data_received_callback)    data_received_callback(conn, rh.length, (char*)(cell->payload + RELAY_HEADER_SIZE));
+		  if(data_received_callback_v2) data_received_callback_v2(conn, conn->obj, rh.length, (char*)(cell->payload + RELAY_HEADER_SIZE));
+	  }
+	  else
+	  {
+	    connection_write_to_buf((char*)(cell->payload + RELAY_HEADER_SIZE),
+                                rh.length, TO_CONN(conn));
+	  }
+
+#else
+
       connection_write_to_buf((char*)(cell->payload + RELAY_HEADER_SIZE),
                               rh.length, TO_CONN(conn));
+#endif
 
       if (!optimistic_data) {
         /* Only send a SENDME if we're not getting optimistic data; otherwise
@@ -2094,6 +2156,9 @@ circuit_resume_edge_reading_helper(edge_connection_t *first_conn,
     if (conn->base_.marked_for_close || conn->package_window <= 0)
       continue;
     if (!layer_hint || conn->cpath_layer == layer_hint) {
+	  #ifdef LIBRARY
+	  if(!conn->is_onionroute_request)
+      #endif
       connection_start_reading(TO_CONN(conn));
 
       if (connection_get_inbuf_len(TO_CONN(conn)) > 0)
@@ -2105,6 +2170,9 @@ circuit_resume_edge_reading_helper(edge_connection_t *first_conn,
     if (conn->base_.marked_for_close || conn->package_window <= 0)
       continue;
     if (!layer_hint || conn->cpath_layer == layer_hint) {
+	  #ifdef LIBRARY
+	  if(!conn->is_onionroute_request)
+      #endif
       connection_start_reading(TO_CONN(conn));
 
       if (connection_get_inbuf_len(TO_CONN(conn)) > 0)

@@ -35,6 +35,11 @@ smartlist_new(void)
   sl->num_used = 0;
   sl->capacity = SMARTLIST_DEFAULT_CAPACITY;
   sl->list = tor_malloc(sizeof(void *) * sl->capacity);
+
+  #ifdef LIBRARY
+  sl->lock = tor_mutex_new();
+  #endif
+
   return sl;
 }
 
@@ -127,6 +132,20 @@ smartlist_pop_last(smartlist_t *sl)
     return sl->list[--sl->num_used];
   else
     return NULL;
+}
+
+void smartlist_lock(smartlist_t *sl)
+{
+#ifdef LIBRARY
+  tor_mutex_acquire(sl->lock);
+#endif
+}
+
+void smartlist_unlock(smartlist_t *sl)
+{
+#ifdef LIBRARY
+tor_mutex_release(sl->lock);
+#endif
 }
 
 /** Reverse the order of the items in <b>sl</b>. */

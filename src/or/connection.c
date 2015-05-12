@@ -49,6 +49,11 @@
 #include "routerparse.h"
 #include "transports.h"
 
+#ifdef LIBRARY
+#include "util.h"
+#include "../libtor_internal.h"
+#endif
+
 #ifdef USE_BUFFEREVENTS
 #include <event2/event.h>
 #endif
@@ -1322,6 +1327,97 @@ check_sockaddr_family_match(sa_family_t got, connection_t *listener)
   }
   return 0;
 }
+
+#ifdef LIBRARY
+
+int
+onionroute_connection_ap_process(entry_connection_t *conn, char* address, int port, void* obj);
+
+void *onionroute_stream_connect_i(char* addr, int port, void* obj)
+{
+	entry_connection_t *entry_conn;
+	entry_conn = entry_connection_new(CONN_TYPE_AP, AF_INET);
+ 
+	onionroute_connection_ap_process(entry_conn, tor_strdup(addr), port, obj);
+
+	return entry_conn;
+}
+
+typedef struct onionroute_connect_command_t
+{
+
+  char* address;
+  int port;
+  void *obj;
+
+} onionroute_connect_command_t;
+
+void
+connect_command_processor(void *data)
+{
+	char* address;
+    int port;
+
+	onionroute_connect_command_t *cmd;
+
+	cmd = (onionroute_connect_command_t *)data;
+
+	address = cmd->address;
+    port = cmd->port;
+
+	onionroute_stream_connect_i(address, port, cmd->obj);
+
+	tor_free(address);
+	tor_free(data);
+}
+
+int onionroute_stream_open_v2(char* addr, int port, void *obj)
+{
+	char *naddr;
+	onionroute_connect_command_t *ccmd;
+	onionroute_command_t *cmd;
+	
+	naddr = tor_strdup(addr);
+
+	if(NULL == naddr) return -1;
+
+	/* store data */
+	ccmd = tor_malloc(sizeof(onionroute_connect_command_t));
+	if(NULL == ccmd)
+	{
+		tor_free(naddr);
+		return -1;
+	}
+
+	cmd = tor_malloc(sizeof(onionroute_command_t));
+	if(NULL == cmd)
+	{
+		/* I love catch / finally blocks to cleanup */
+		tor_free(naddr);
+		tor_free(ccmd);
+		return -1;
+	}
+
+	ccmd->address = naddr;
+	ccmd->port = port;
+	ccmd->obj = obj;
+	
+	cmd->data = ccmd;
+	cmd->processor = connect_command_processor;
+
+	/* store command in queue */
+	smartlist_add(cqueue, cmd);
+
+	return 0;
+}
+
+
+int onionroute_stream_open_v1(char* addr, int port)
+{
+	return onionroute_stream_open_v2(addr, port, NULL);
+}
+
+#endif
 
 /** The listener connection <b>conn</b> told poll() it wanted to read.
  * Call accept() on conn-\>s, and add the new connection if necessary.
@@ -3117,6 +3213,229 @@ connection_consider_empty_read_buckets(connection_t *conn)
 }
 #endif
 
+#ifdef LIBRARY
+
+/** Read bytes from conn-\>s and process them.
+ *
+ * It calls connection_read_to_buf() to bring in any new bytes,
+ * and then calls connection_process_inbuf() to process them.
+ *
+ * Mark the connection and return -1 if you want to close it, else
+ * return 0.
+ */
+
+int
+onionroute_stream_write_i(void *id, char* data, int size)
+{
+  connection_t *conn = id;
+
+  ssize_t max_to_read=-1;
+  size_t before, n_read = 0;
+  int socket_error = 0;
+
+  tor_gettimeofday_cache_clear();
+
+  if (conn->marked_for_close)
+    return 0; /* do nothing */
+
+  conn->timestamp_lastread = approx_time();
+ 
+  tor_assert(!conn->marked_for_close);
+
+  before = buf_datalen(conn->inbuf);
+
+  if (write_to_buf(data, size, conn->inbuf) < 0)
+  {
+	  /* actually  write_to_buf never returns -1 even under low memory conditions
+	     so this code is never executed but to be clean
+	     */
+
+	  /* There's a read error; kill the connection.*/
+
+	  if (CONN_IS_EDGE(conn))
+	  {
+		  edge_connection_t *edge_conn = TO_EDGE_CONN(conn);
+		  connection_edge_end_errno(edge_conn);
+
+		  if (conn->type == CONN_TYPE_AP && TO_ENTRY_CONN(conn)->socks_request)
+		  {
+			  /* broken, don't send a socks reply back */
+			  TO_ENTRY_CONN(conn)->socks_request->has_finished = 1;
+		  }
+	  }
+
+	  connection_close_immediate(conn); /* Don't flush; connection is dead. */
+	  connection_mark_for_close(conn);
+	  return -1;
+  }
+
+  n_read += buf_datalen(conn->inbuf) - before;
+
+  if (CONN_IS_EDGE(conn))
+  {
+    /* instruct it not to try to package partial cells. */
+    if (connection_process_inbuf(conn, 0) < 0)
+    {
+      return -1;
+    }
+  }
+
+  /* one last try, packaging partial cells and all. */
+  /* this works but is slow if clients just makw several partial wrote requests as transfers partial cells
+     maybe we can define a flush operation */
+
+  if (!conn->marked_for_close &&
+      connection_process_inbuf(conn, 1) < 0)
+  {
+    return -1;
+  }
+
+
+  if (conn->linked_conn)
+  {
+    /* The other side's handle_write() will never actually get called, so
+     * we need to invoke the appropriate callbacks ourself. */
+    connection_t *linked = conn->linked_conn;
+
+    if (n_read)
+    {
+      /* Probably a no-op, since linked conns typically don't count for
+       * bandwidth rate limiting. But do it anyway so we can keep stats
+       * accurately. Note that since we read the bytes from conn, and
+       * we're writing the bytes onto the linked connection, we count
+       * these as <i>written</i> bytes. */
+      connection_buckets_decrement(linked, approx_time(), 0, n_read);
+
+      if (connection_flushed_some(linked) < 0)
+        connection_mark_for_close(linked);
+
+      if (!connection_wants_to_flush(linked))
+        connection_finished_flushing(linked);
+    }
+
+
+    if (!buf_datalen(linked->outbuf) && conn->active_on_link)
+      connection_stop_reading_from_linked_conn(conn);
+  }
+
+
+  /* If we hit the EOF, call connection_reached_eof(). */
+  /*if (!conn->marked_for_close &&
+      conn->inbuf_reached_eof &&
+      connection_reached_eof(conn) < 0)
+  {
+    return -1;
+  }*/
+
+
+  return 0;
+}
+
+/* XXX we do nothing now but to let API users make proper use of it beforehand 
+   in the future we could coalesce all writes here so we don't write partial cells like 
+   we do now (slow)
+*/
+
+int onionroute_stream_flush_v1(void *id)
+{
+	return 0;
+}
+
+typedef struct onionroute_write_command_t
+{
+
+  void *id;
+  char* data;
+  int size;
+
+} onionroute_write_command_t;
+
+void
+write_command_processor(void *data)
+{
+	void *id;
+	char* idata;
+	int size;
+
+	onionroute_write_command_t *cmd;
+
+	cmd = (onionroute_write_command_t *)data;
+
+	id = cmd->id;
+	idata = cmd->data;
+	size = cmd->size;
+
+	onionroute_stream_write_i(id, idata, size);
+
+	tor_free(idata);
+	tor_free(data);
+}
+
+
+
+int
+onionroute_stream_write_v1(void *id, char* data, int size)
+{
+	onionroute_write_command_t *wcmd;
+	onionroute_command_t *cmd;
+
+	char *ndata = (char*)tor_malloc(size);
+	ndata = (char*)tor_memdup(data, size);
+
+	if(NULL == ndata) return -1;
+
+	/* store data */
+	wcmd = tor_malloc(sizeof(onionroute_write_command_t));
+	if(NULL == wcmd) /* tor_malloc never returns NULL, it justs exits under low memory 
+					    but to prepare things as they should be in a library */
+	{
+		tor_free(ndata);
+		return -1;
+	}
+
+	cmd = tor_malloc(sizeof(onionroute_command_t));
+	if(NULL == cmd)
+	{
+		/* I love catch / finally blocks to cleanup */
+		tor_free(ndata);
+		tor_free(wcmd);
+		return -1;
+	}
+
+	wcmd->data = ndata;
+	wcmd->id = id;
+	wcmd->size = size;
+	
+	cmd->data = wcmd;
+	cmd->processor = write_command_processor;
+
+	/* store command in queue */
+	smartlist_add(cqueue, cmd);
+
+	return 0;
+}
+ 
+int onionroute_stream_printf_v1(void *id, const char *format, ...)
+{
+  char *str = NULL;
+  int size;
+  va_list ap;
+
+  va_start(ap,format);
+  size = tor_vasprintf(&str, format, ap);
+  va_end(ap);
+
+  tor_assert(str != NULL);
+
+  onionroute_stream_write_v1(id, str, size);
+
+  tor_free(str);
+
+  return 0;
+}
+
+#endif
+
 /** Read bytes from conn-\>s and process them.
  *
  * It calls connection_read_to_buf() to bring in any new bytes,
@@ -4667,12 +4986,23 @@ assert_connection_ok(connection_t *conn, time_t now)
     /* With optimistic data, we may have queued data in
      * EXIT_CONN_STATE_RESOLVING while the conn is not yet marked to writing.
      * */
-    tor_assert((conn->type == CONN_TYPE_EXIT &&
+
+#ifdef LIBRARY
+         tor_assert((conn->type == CONN_TYPE_EXIT &&
                 conn->state == EXIT_CONN_STATE_RESOLVING) ||
                connection_is_writing(conn) ||
                conn->write_blocked_on_bw ||
                (CONN_IS_EDGE(conn) &&
-                TO_EDGE_CONN(conn)->edge_blocked_on_circ));
+			   (TO_EDGE_CONN(conn)->edge_blocked_on_circ || TO_EDGE_CONN(conn)->is_onionroute_request)));
+#else
+	     tor_assert((conn->type == CONN_TYPE_EXIT &&
+                conn->state == EXIT_CONN_STATE_RESOLVING) ||
+               connection_is_writing(conn) ||
+               conn->write_blocked_on_bw ||
+               (CONN_IS_EDGE(conn) &&
+			   TO_EDGE_CONN(conn)->edge_blocked_on_circ));
+#endif
+
   }
 
   if (conn->hold_open_until_flushed)

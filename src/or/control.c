@@ -663,6 +663,113 @@ get_stream(const char *id)
   return TO_ENTRY_CONN(conn);
 }
 
+#ifdef LIBRARY
+
+/** Helper for setconf and resetconf. Acts like setconf, except
+ * it passes <b>use_defaults</b> on to options_trial_assign().  Modifies the
+ * contents of body.
+ */
+int
+onionroute_setconf(char *body, int use_defaults)
+{
+  setopt_err_t opt_err;
+  config_line_t *lines=NULL;
+  char *start = body;
+  char *errstring = NULL;
+  const int clear_first = 1;
+
+  size_t len = strlen(body);
+
+  char *config;
+  smartlist_t *entries = smartlist_new();
+
+  /* We have a string, "body", of the format '(key(=val|="val")?)' entries
+   * separated by space.  break it into a list of configuration entries. */
+  while (*body) {
+    char *eq = body;
+    char *key;
+    char *entry;
+    while (!TOR_ISSPACE(*eq) && *eq != '=')
+      ++eq;
+    key = tor_strndup(body, eq-body);
+    body = eq+1;
+    if (*eq == '=') {
+      char *val=NULL;
+      size_t val_len=0;
+      if (*body != '\"') {
+        char *val_start = body;
+        while (!TOR_ISSPACE(*body))
+          body++;
+        val = tor_strndup(val_start, body-val_start);
+        val_len = strlen(val);
+      } else {
+        body = (char*)extract_escaped_string(body, (len - (body-start)),
+                                             &val, &val_len);
+        if (!body) {
+          SMARTLIST_FOREACH(entries, char *, cp, tor_free(cp));
+          smartlist_free(entries);
+          tor_free(key);
+          return 0;
+        }
+      }
+      tor_asprintf(&entry, "%s %s", key, val);
+      tor_free(key);
+      tor_free(val);
+    } else {
+      entry = key;
+    }
+    smartlist_add(entries, entry);
+    while (TOR_ISSPACE(*body))
+      ++body;
+  }
+
+  smartlist_add(entries, tor_strdup(""));
+  config = smartlist_join_strings(entries, "\n", 0, NULL);
+  SMARTLIST_FOREACH(entries, char *, cp, tor_free(cp));
+  smartlist_free(entries);
+
+  if (config_get_lines(config, &lines, 0) < 0) {
+    log_warn(LD_GENERAL,"libtor received config lines we can't parse.");
+    
+    tor_free(config);
+    return 0;
+  }
+  tor_free(config);
+
+  opt_err = options_trial_assign(lines, use_defaults, clear_first, &errstring);
+  {
+    const char *msg;
+    switch (opt_err) {
+      case SETOPT_ERR_MISC:
+        msg = "552 Unrecognized option";
+        break;
+      case SETOPT_ERR_PARSE:
+        msg = "513 Unacceptable option value";
+        break;
+      case SETOPT_ERR_TRANSITION:
+        msg = "553 Transition not allowed";
+        break;
+      case SETOPT_ERR_SETTING:
+      default:
+        msg = "553 Unable to set option";
+        break;
+      case SETOPT_OK:
+        config_free_lines(lines);
+        
+        return 0;
+    }
+    log_warn(LD_CONTROL,
+             "received config lines that didn't validate: %s",
+             errstring);
+    
+    config_free_lines(lines);
+    tor_free(errstring);
+    return 0;
+  }
+}
+
+#endif
+
 /** Helper for setconf and resetconf. Acts like setconf, except
  * it passes <b>use_defaults</b> on to options_trial_assign().  Modifies the
  * contents of body.
@@ -4902,6 +5009,18 @@ static int bootstrap_problems = 0;
  */
 #define BOOTSTRAP_PCT_INCREMENT 5
 
+#ifdef LIBRARY
+
+onionroute_event_bootstrap_t_v1 bootstrapcallback = 0;
+
+ONIONROUTE_API
+void onionroute_set_bootstrap_callback_v1(onionroute_event_bootstrap_t_v1 callback)
+{
+	bootstrapcallback = callback;
+}
+
+#endif
+
 /** Called when Tor has made progress at bootstrapping its directory
  * information and initial circuits.
  *
@@ -4913,6 +5032,10 @@ control_event_bootstrap(bootstrap_status_t status, int progress)
 {
   const char *tag, *summary;
   char buf[BOOTSTRAP_MSG_LEN];
+
+  #ifdef LIBRARY
+  if(bootstrapcallback) bootstrapcallback(status, progress);
+  #endif
 
   if (bootstrap_percent == BOOTSTRAP_STATUS_DONE)
     return; /* already bootstrapped; nothing to be done here. */

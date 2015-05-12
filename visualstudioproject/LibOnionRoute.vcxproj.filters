@@ -431,9 +431,6 @@
     <ClCompile Include="..\src\or\nodelist.c">
       <Filter>Source Files\or</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\or\ntmain.c">
-      <Filter>Source Files\or</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\or\onion.c">
       <Filter>Source Files\or</Filter>
     </ClCompile>
